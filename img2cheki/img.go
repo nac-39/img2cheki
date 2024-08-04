@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"image/png"
 	"log"
+	"math"
 	"os"
 
 	"golang.org/x/image/draw"
@@ -87,18 +88,35 @@ func AddBlackFrame(img *image.RGBA, thickness int) *image.RGBA {
 	return newImage
 }
 
+func (img *GoImg) ToVertical() {
+	if img.Height > img.Width {
+		return
+	}
+	newImg := image.NewRGBA(image.Rect(0, 0, img.Height, img.Width))
+	angle := math.Pi / 2
+	// 画像の回転処理
+	for y := 0; y < img.Height; y++ {
+		for x := 0; x < img.Width; x++ {
+			newX := int((float64(x)-float64(img.Width/2))*math.Cos(angle) - (float64(y)-float64(img.Height/2))*math.Sin(angle) + float64(img.Height)/2)
+			newY := int(float64(x-img.Width/2)*math.Sin(angle) + (float64(y)-float64(img.Height/2))*math.Cos(angle) + float64(img.Width)/2)
+			newImg.Set(newX, newY, img.Image.At(x, y))
+		}
+	}
+	img.Image = newImg
+}
 func (img *GoImg) ToCheki(config Config, frame_thickness Unit) *image.RGBA {
-
+	img.ToVertical()
+	unit := UnitConfig{DPI: config.DPI}
 	resized_size := Size{
-		Width:  &Cm{value: 4.6, DPI: config.DPI},
-		Height: &Cm{value: 6.2, DPI: config.DPI},
+		Width:  unit.Cm(4.6),
+		Height: unit.Cm(6.2),
 	}
 
 	resized := ResizeKeepAspect(img.Image, resized_size.Width.Pixel(), resized_size.Height.Pixel())
 
 	frame_size := Size{
-		Width:  &Cm{value: 5.4, DPI: config.DPI},
-		Height: &Cm{value: 8.6, DPI: config.DPI},
+		Width:  unit.Cm(5.4),
+		Height: unit.Cm(8.6),
 	}
 	frame := image.NewRGBA(image.Rect(0, 0, frame_size.Width.Pixel(), frame_size.Height.Pixel()))
 	FillIn(frame, color.White)
@@ -106,5 +124,10 @@ func (img *GoImg) ToCheki(config Config, frame_thickness Unit) *image.RGBA {
 
 	margin := (frame_size.Width.Pixel() + frame_thickness.Pixel()*2 - resized_size.Width.Pixel()) / 2
 	draw.Draw(frame, image.Rect(margin, margin, frame.Rect.Size().X, frame.Rect.Size().Y), resized, resized.Bounds().Min, draw.Over)
+	// return &GoImg{
+	// 	Image:  frame,
+	// 	Height: frame_size.Height.Pixel(),
+	// 	Width:  frame_size.Width.Pixel(),
+	// }
 	return frame
 }
