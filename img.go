@@ -1,9 +1,8 @@
-package main
+package img2cheki
 
 import (
 	"image"
 	"image/color"
-	"image/jpeg"
 	"image/png"
 	"log"
 	"os"
@@ -11,53 +10,11 @@ import (
 	"golang.org/x/image/draw"
 )
 
-type Config struct {
-	DPI int
-}
-
 type ImgOperator interface {
-	ToCheki() *image.RGBA
+	ToCheki(config Config, frame_thickness Unit) *image.RGBA
 	Save()
 }
 
-type Unit interface {
-	Pixel() int
-	Inch() float64
-	Cm() float64
-}
-
-type Pixel struct {
-	value  int
-	config Config
-}
-
-func (px *Pixel) Pixel() int {
-	return px.value
-}
-
-func (px *Pixel) Inch() float64 {
-	return float64(px.value) / float64(px.config.DPI)
-}
-
-func (px *Pixel) Cm() float64 {
-	return px.Inch() * 2.54
-}
-
-func (cm *Cm) Pixel() int {
-	return int(float64(cm.Inch()) * float64(cm.config.DPI))
-}
-
-func (cm *Cm) Inch() float64 {
-	return cm.value * 2.54
-}
-func (cm *Cm) Cm() float64 {
-	return cm.value
-}
-
-type Cm struct {
-	value  float64
-	config Config
-}
 type GoImg struct {
 	// image
 	Image image.Image
@@ -67,10 +24,6 @@ type GoImg struct {
 
 	// height and width of image
 	Height, Width int
-}
-
-type Size struct {
-	Height, Width Unit
 }
 
 func LoadImage(path string) GoImg {
@@ -107,7 +60,7 @@ func (img *GoImg) Save(path string) {
 	png.Encode(file, img.Image)
 }
 
-func ResizeKeepAspect(img image.Image, width, height int) draw.Image {
+func ResizeKeepAspect(img image.Image, width, height int) *image.RGBA {
 	src := img.Bounds()
 	dst := image.Rect(0, 0, width, height)
 	newImage := image.NewRGBA(image.Rect(0, 0, width, height))
@@ -134,21 +87,7 @@ func AddBlackFrame(img *image.RGBA, thickness int) *image.RGBA {
 	return newImage
 }
 
-func main() {
-	config := Config{
-		DPI: 350,
-	}
-
-	img := LoadImage("sample.jpeg")
-	log.Println(img.Height, img.Width)
-
-	output_size := Size{
-		Width:  &Cm{value: 12.7, config: config},
-		Height: &Cm{value: 8.9, config: config},
-	}
-
-	output := image.NewRGBA(image.Rect(0, 0, output_size.Width.Pixel(), output_size.Height.Pixel()))
-	FillIn(output, color.White)
+func (img *GoImg) ToCheki(config Config, frame_thickness Unit) *image.RGBA {
 
 	resized_size := Size{
 		Width:  &Cm{value: 4.6, config: config},
@@ -163,18 +102,9 @@ func main() {
 	}
 	frame := image.NewRGBA(image.Rect(0, 0, frame_size.Width.Pixel(), frame_size.Height.Pixel()))
 	FillIn(frame, color.White)
-	frame_thickness := Cm{value: 0.01, config: config}
 	frame = AddBlackFrame(frame, frame_thickness.Pixel())
 
 	margin := (frame_size.Width.Pixel() + frame_thickness.Pixel()*2 - resized_size.Width.Pixel()) / 2
-	log.Println(margin)
 	draw.Draw(frame, image.Rect(margin, margin, frame.Rect.Size().X, frame.Rect.Size().Y), resized, resized.Bounds().Min, draw.Over)
-	draw.Draw(output, output.Bounds(), frame, frame.Bounds().Min, draw.Over)
-	out, err := os.Create("output.png")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer out.Close()
-	jpeg.Encode(out, output, nil)
+	return frame
 }
