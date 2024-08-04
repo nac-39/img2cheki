@@ -90,15 +90,15 @@ func AddBlackFrame(img *image.RGBA, thickness int) *image.RGBA {
 func (img *GoImg) ToCheki(config Config, frame_thickness Unit) *image.RGBA {
 
 	resized_size := Size{
-		Width:  &Cm{value: 4.6, config: config},
-		Height: &Cm{value: 6.2, config: config},
+		Width:  &Cm{value: 4.6, DPI: config.DPI},
+		Height: &Cm{value: 6.2, DPI: config.DPI},
 	}
 
 	resized := ResizeKeepAspect(img.Image, resized_size.Width.Pixel(), resized_size.Height.Pixel())
 
 	frame_size := Size{
-		Width:  &Cm{value: 5.4, config: config},
-		Height: &Cm{value: 8.6, config: config},
+		Width:  &Cm{value: 5.4, DPI: config.DPI},
+		Height: &Cm{value: 8.6, DPI: config.DPI},
 	}
 	frame := image.NewRGBA(image.Rect(0, 0, frame_size.Width.Pixel(), frame_size.Height.Pixel()))
 	FillIn(frame, color.White)

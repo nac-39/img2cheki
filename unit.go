@@ -6,8 +6,8 @@ type Config struct {
 	OutputMargin   Unit
 }
 type Pixel struct {
-	value  int
-	config Config
+	value int
+	DPI   int
 }
 
 func (px *Pixel) Pixel() int {
@@ -15,7 +15,7 @@ func (px *Pixel) Pixel() int {
 }
 
 func (px *Pixel) Inch() float64 {
-	return float64(px.value) / float64(px.config.DPI)
+	return float64(px.value) / float64(px.DPI)
 }
 
 func (px *Pixel) Cm() float64 {
@@ -23,7 +23,7 @@ func (px *Pixel) Cm() float64 {
 }
 
 func (cm *Cm) Pixel() int {
-	return int(float64(cm.Inch()) * float64(cm.config.DPI))
+	return int(float64(cm.Inch()) * float64(cm.DPI))
 }
 
 func (cm *Cm) Inch() float64 {
@@ -34,8 +34,8 @@ func (cm *Cm) Cm() float64 {
 }
 
 type Cm struct {
-	value  float64
-	config Config
+	value float64
+	DPI   int
 }
 
 type Unit interface {
