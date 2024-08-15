@@ -57,9 +57,6 @@ func main() {
 ### 画像サンプル
 
 三枚の画像を２枚のL版サイズに出力します。
-![sample1](sample/sample1.jpeg)
-![sample2](sample/sample2.jpeg)
-![sample3](sample/sample3.jpeg)
 
 結果
 ![output1](sample/output1.jpeg)
